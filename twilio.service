@@ -1,0 +1,22 @@
+[Unit]
+Description=twilio
+Requires=network.target
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/var/www/Apis/twilioApi
+User=pi
+
+Restart=always
+RestartSec=10
+
+; Configure Hubot environment variables, use quotes around vars with whitespace as shown below.
+
+; Alternatively multiple environment variables can loaded from an external file
+;EnvironmentFile=/etc/hubot-environment
+
+ExecStart=/usr/bin/node /var/www/Apis/twilioApi/twilioApi.js
+
+[Install]
+WantedBy=multi-user.target
