@@ -21,49 +21,16 @@ app.post('/api/twilio/incoming', function (req, res) {
   console.log(req.body.From);
 try{
 
-  const twiml = new MessagingResponse();
+  validateAccess(req);
 
-  if(req.body.From !== config.admin){
-    res.send();
-    throw("Unauthorized request: "+ req.body);
-  }
+}
+catch(ex){
+  res.send();
+  throw("Exception: "+ ex);
 
-console.log("test");
-
-var request ={
-  "message":req.body.Body,
-  "from":req.body.From
-};
-
-res.writeHead(200, {'Content-Type': 'text/xml'});
-res.end(twiml.toString());
-
-var options = {
-  method: 'POST',
-  uri: config.booth + '/api/booth/incoming',
-  body:  {
-    "message":req.body.Body,
-    "from":req.body.From
-  },
-  json: true,
-  headers: { 
-      "Content-Type": "application/json",
-      "User-Agent": "ideaApi"
-  }
-};
-
-rp(options).then(function(parsedBody){
-  console.log(parsedBody);
-
-}).catch(function(err){
-  console.log(err);
-});
-
-}catch(ex){
-  console.log(ex);
 }
 
-})
+});
 
 app.post('/api/twilio/outgoing', function (req, res){
   var request = {
@@ -78,6 +45,68 @@ if(request.message){
 res.send();
 
 
-})
+});
+
+function validateAccess(req){
+  var phoneNumber = req.body.From;
+
+  console.log("who is " + phoneNumber);
+  var options = {
+    method: 'GET',
+    uri: config.profile + '/api/profile/' + phoneNumber,
+    json: true,
+    headers: { 
+        "Content-Type": "application/json",
+        "User-Agent": "profile"
+    }
+  };
+
+  rp(options).then(function(parsedBody){
+    console.log(parsedBody);
+
+    if(parsedBody.username != ""){
+      console.log("Profile Valid");
+      Process(req);
+    }else{
+      console.log("Profile Invalid");
+      return false;
+    }
+  
+  }).catch(function(err){
+    console.log(err);
+  });
+
+
+};
+
+function Process(req){
+
+  var request ={
+    "message":req.body.Body,
+    "from":req.body.From
+  };
+  
+  var options = {
+    method: 'POST',
+    uri: config.booth + '/api/booth/incoming',
+    body:  {
+      "message":req.body.Body,
+      "from":req.body.From
+    },
+    json: true,
+    headers: { 
+        "Content-Type": "application/json",
+        "User-Agent": "ideaApi"
+    }
+  };
+  
+  rp(options).then(function(parsedBody){
+    console.log(parsedBody);
+  
+  }).catch(function(err){
+    console.log(err);
+  });
+    
+};
 
 app.listen(3004);
